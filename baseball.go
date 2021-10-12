@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
+//숫자야구의 답이 들어가는 타입
 type Baseball []int
 
-var baseball Baseball
-
+// 숫자야구에 초기값을 설정하는 함수
 func (b *Baseball) init(cnt int) {
 	var exist [10]bool
 	rand.Seed(time.Now().UnixNano())
@@ -24,8 +24,9 @@ func (b *Baseball) init(cnt int) {
 	}
 }
 
-func contain(num int, baseBall []int) bool {
-	for _, value := range baseBall {
+// 현재 예측한 수의 자리수의 수와 일치하는 숫자야구의 수가 있는지 확인하는 함수
+func (b *Baseball) contain(num int) bool {
+	for _, value := range *b {
 		if num == value {
 			return true
 		}
@@ -33,12 +34,13 @@ func contain(num int, baseBall []int) bool {
 	return false
 }
 
-func call_judge(strike, ball chan int, num int, idx int) {
-	if baseball[idx] == num {
+// 숫자야구에서 현재 자리수가 스트라이크인지 볼인지 아웃인지 확인하는 함수
+func (b Baseball) callJudge(strike, ball chan int, num int, idx int) {
+	if b[idx] == num {
 		strike <- 1
 		ball <- 0
 		return
-	} else if contain(num, baseball) {
+	} else if b.contain(num) {
 		ball <- 1
 		strike <- 0
 		return
@@ -48,6 +50,7 @@ func call_judge(strike, ball chan int, num int, idx int) {
 }
 
 func main() {
+	var baseball Baseball
 	n := 0
 	ball := make(chan int, 1)
 	strike := make(chan int, 1)
@@ -71,7 +74,7 @@ func main() {
 			continue
 		}
 		for i, value := range str {
-			go call_judge(strike, ball, int(value-'0'), i)
+			go baseball.callJudge(strike, ball, int(value-'0'), i)
 			s += <-strike
 			b += <-ball
 		}
@@ -84,3 +87,10 @@ func main() {
 		}
 	}
 }
+
+/* 왜 루틴으로 나눴는데 루틴으로 안나눈게 훨씬 빠르지?
+테스트가 잘못된건가?
+아니면 구현 자체가 이상해서 문제가 생긴건가?
+잘모르겠다.. 일단 루틴은 그대로 두고
+웹서버 구동 함수 나누기로 넘어가자
+*/
